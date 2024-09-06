@@ -1,41 +1,42 @@
 import rclpy
 from robot_control import RobotControl
 
-def test_robot_control():
-    # Initialize ROS client library
+def test_poke_objects():
     rclpy.init()
-
-    # Initialize RobotControl component
     robot_control = RobotControl()
 
     try:
-        while True:
-            # Prompt user for command
-            command = input("Enter command (poke object, reset position, close program): ").strip().lower()
-            
-            if command == "poke object":
-                print("Poking object...")
-                force = robot_control.poke_object(x=0.5, y=0.0, z=0.3)
-                print(f"Measured force: {force}")
-                
-            elif command == "reset position":
-                print("Resetting position...")
-                robot_control.reset_position()
-                print("Position reset.")
-                
-            elif command == "close program":
-                print("Closing program...")
-                break  # Exit the loop and terminate the program
-                
-            else:
-                print("Command not recognized. Please try again.")
-    
+        # Move to the first object and poke it
+        print("Moving to the first object...")
+        # Example joint positions for the first object
+        joint_positions_1 = [0.5, 0.0, 0.3, 0, 0, 0, 0, 0, 0]  # Update as needed
+        force_1 = robot_control.poke_object(joint_positions_1)
+        print(f"Force measured at first object: {force_1} N")
+        
+        # Reset position
+        print("Resetting position...")
+        robot_control.reset_position()
+        
+        # Move to the second object and poke it
+        print("Moving to the second object...")
+        # Example joint positions for the second object
+        joint_positions_2 = [0.6, 0.0, 0.4, 0, 0, 0, 0, 0, 0]  # Update as needed
+        force_2 = robot_control.poke_object(joint_positions_2)
+        print(f"Force measured at second object: {force_2} N")
+        
+        # Compare forces
+        if force_1 > force_2:
+            print("The first object is harder.")
+        elif force_1 < force_2:
+            print("The second object is harder.")
+        else:
+            print("Both objects have the same hardness.")
+
     except KeyboardInterrupt:
         print("Test interrupted.")
     
     finally:
-        # Cleanup
         rclpy.shutdown()
 
 if __name__ == '__main__':
-    test_robot_control()
+    test_poke_objects()
