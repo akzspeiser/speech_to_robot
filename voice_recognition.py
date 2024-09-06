@@ -5,7 +5,7 @@ import pyaudio
 class VoiceRecognition:
     def __init__(self):
         # Load the Vosk model
-        self.model = vosk.Model("/home/zac/Downloads/vosk")
+        self.model = vosk.Model("/home/charisma/Downloads/vosk")
         self.recognizer = vosk.KaldiRecognizer(self.model, 16000)
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(
