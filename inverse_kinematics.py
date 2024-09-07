@@ -1,19 +1,21 @@
 import PyKDL as kdl
 import numpy as np
-import rospy
 from urdf_parser_py.urdf import URDF
+
 
 class FrankaIKSolver:
     def __init__(self, urdf_file):
         # Load the URDF model from the file
         robot = URDF.from_xml_file(urdf_file)
         
-        # Define the kinematic chain from the base to the end-effector (replace 'base_link' and 'end_effector_link' with actual link names)
-        self.base_link = 'base_link'  # Modify with actual link name
-        self.end_effector_link = 'fr3_hand'  # Modify with actual end-effector link name
+        # Base and end-effector link names, based on the URDF
+        self.base_link = 'base'  # Matches the 'base' link in the URDF
+        self.end_effector_link = 'fr3_hand'  # Matches the 'fr3_hand' link in the URDF
 
-        # Create the KDL tree from the URDF
-        self.kdl_tree = kdl.Tree()
+        # Build the KDL Tree from the URDF robot model
+        self.kdl_tree = self.build_kdl_tree(robot)
+
+        # Create the KDL chain from base link to end-effector link
         self.kdl_chain = self.kdl_tree.getChain(self.base_link, self.end_effector_link)
         
         # Create a KDL solver for forward kinematics
@@ -21,6 +23,19 @@ class FrankaIKSolver:
         
         # Create a KDL solver for the Jacobian
         self.jac_solver = kdl.ChainJntToJacSolver(self.kdl_chain)
+
+    def build_kdl_tree(self, robot):
+        """
+        Build the KDL Tree from the URDF model.
+        :param robot: URDF robot model.
+        :return: KDL tree.
+        """
+        kdl_tree = kdl.Tree(robot.get_root())
+        for joint in robot.joints:
+            if joint.joint_type == 'fixed':
+                continue
+            kdl_tree.addSegment(kdl.Segment(joint.name), kdl_tree.getSegment(joint.parent))
+        return kdl_tree
 
     def forward_kinematics(self, joints):
         """
@@ -97,25 +112,25 @@ class FrankaIKSolver:
 
 
 # Example usage:
-# If this script is used within another module, you can import and use it like this:
-# from inverse_kinematics import FrankaIKSolver
-
-# Initialize the IK solver with the path to your URDF file
-urdf_file_path = '/path/to/your/urdf/franka.urdf'
-ik_solver = FrankaIKSolver(urdf_file_path)
-
-# Define the target pose (4x4 matrix) and initial joint configuration (7 DOF)
-target_pose = np.identity(4)
-target_pose[0, 3] = 0.4  # Set x position
-target_pose[1, 3] = 0.2  # Set y position
-target_pose[2, 3] = 0.5  # Set z position
-
-initial_joints = np.zeros(7)
-
-# Solve IK
-solution_joints = ik_solver.inverse_kinematics(target_pose, initial_joints)
-
-if solution_joints is not None:
-    print(f"IK solution found: {solution_joints}")
-else:
-    print("No IK solution found.")
+if __name__ == '__main__':
+    # Define the URDF file path (update this with your actual URDF path)
+    urdf_file_path = '/home/charisma/franka_ros2_ws/src/franka_description/robots/fr3/fr3.urdf'
+    
+    # Initialize the IK solver with the URDF
+    ik_solver = FrankaIKSolver(urdf_file_path)
+    
+    # Define the target pose (4x4 matrix) and initial joint configuration (7 DOF)
+    target_pose = np.identity(4)
+    target_pose[0, 3] = 0.4  # Set x position
+    target_pose[1, 3] = 0.2  # Set y position
+    target_pose[2, 3] = 0.5  # Set z position
+    
+    initial_joints = np.zeros(7)  # Initial joint configuration
+    
+    # Solve IK
+    solution_joints = ik_solver.inverse_kinematics(target_pose, initial_joints)
+    
+    if solution_joints is not None:
+        print(f"Inverse kinematics solution found: {solution_joints}")
+    else:
+        print("No solution found.")
